@@ -1,0 +1,4 @@
+rootProject.name = 'schema-registry'
+include 'schema-registry-api'
+include 'schema-registry-db'
+
