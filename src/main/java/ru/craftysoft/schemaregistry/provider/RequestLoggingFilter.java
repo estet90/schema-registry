@@ -70,11 +70,13 @@ public class RequestLoggingFilter implements ContainerRequestFilter {
                         headers={}""", requestContext.getMethod(), url, headers);
                 containerRequestContext.resume();
             }
+        } else {
+            containerRequestContext.resume();
         }
     }
 
     @Nonnull
-    private String extractBody(ResteasyReactiveContainerRequestContext containerRequestContext, MultivaluedMap<String, String> headers) {
+    private String extractBody(ContainerRequestContext containerRequestContext, MultivaluedMap<String, String> headers) {
         try {
             var hasBodyForLogging = false;
             var contentTypes = headers.getOrDefault(CONTENT_TYPE, List.of());

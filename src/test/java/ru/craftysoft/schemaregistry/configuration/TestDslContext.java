@@ -42,7 +42,9 @@ public class TestDslContext extends DefaultDSLContext {
                     throw new DataAccessException(e.getMessage(), e);
                 }
             }
-        }, SQLDialect.POSTGRES, new Settings().withRenderFormatted(true));
+        }, SQLDialect.POSTGRES, new Settings()
+                .withRenderNamedParamPrefix("$")
+                .withRenderFormatted(true));
     }
 
 }

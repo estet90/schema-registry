@@ -13,13 +13,16 @@ import javax.enterprise.context.ApplicationScoped;
 public class DbConfiguration {
 
     @ApplicationScoped
-    DbClient dbClient(PgPool pgPool) {
-        return new DbClient(pgPool);
+    DbClient dbClient(PgPool pgPool, DSLContext dslContext) {
+        return new DbClient(pgPool, dslContext);
     }
 
     @ApplicationScoped
     DSLContext dslContext() {
-        return new DefaultDSLContext(SQLDialect.POSTGRES, new Settings().withRenderFormatted(true));
+        var settings = new Settings()
+                .withRenderNamedParamPrefix("$")
+                .withRenderFormatted(true);
+        return new DefaultDSLContext(SQLDialect.POSTGRES, settings);
     }
 
 }

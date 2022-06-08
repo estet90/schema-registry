@@ -11,7 +11,9 @@ import ru.craftysoft.schemaregistry.util.DbClient;
 
 import javax.annotation.Nullable;
 import javax.enterprise.context.ApplicationScoped;
+import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 
 import static ru.craftysoft.schemaregistry.model.jooq.tables.Structures.STRUCTURES;
 import static ru.craftysoft.schemaregistry.model.jooq.tables.Versions.VERSIONS;
@@ -22,24 +24,20 @@ import static ru.craftysoft.schemaregistry.model.jooq.tables.Versions.VERSIONS;
 public class VersionDao {
 
     private final DbClient dbClient;
-    private final DSLContext dslContext;
 
     public Uni<Long> create(SqlClient sqlClient, VersionsRecord record) {
-        var query = dslContext.insertInto(VERSIONS)
-                .set(record)
-                .returning(VERSIONS.ID);
-        return DbClient.toUni(sqlClient, log, "VersionDao.create", query, row -> row.getLong(VERSIONS.ID.getName()));
+        return dbClient.insertWithReturning(sqlClient, log, "VersionDao.create", record, List.of(VERSIONS.ID), row -> row.getLong(VERSIONS.ID.getName()));
     }
 
     public Uni<String> getLink(SqlClient sqlClient, long id) {
-        var query = dslContext.select(VERSIONS.LINK)
+        Function<DSLContext, Query> queryBuilder = dslContext -> dslContext.select(VERSIONS.LINK)
                 .from(VERSIONS)
                 .where(VERSIONS.ID.eq(id));
-        return DbClient.toUni(sqlClient, log, "VersionDao.getLink", query, row -> row.getString(VERSIONS.LINK.getName()));
+        return dbClient.toUni(sqlClient, log, "VersionDao.getLink", queryBuilder, row -> row.getString(VERSIONS.LINK.getName()));
     }
 
     public Uni<VersionsRecord> get(SqlClient sqlClient, long structureId, String name) {
-        var query = dslContext
+        Function<DSLContext, Query> queryBuilder = dslContext -> dslContext
                 .select(
                         VERSIONS.ID,
                         VERSIONS.LINK
@@ -49,7 +47,7 @@ public class VersionDao {
                         VERSIONS.STRUCTURE_ID.eq(structureId),
                         VERSIONS.NAME.eq(name)
                 );
-        return DbClient.toUni(sqlClient, log, "VersionDao.getLink", query, row -> new VersionsRecord(
+        return dbClient.toUni(sqlClient, log, "VersionDao.getLink", queryBuilder, row -> new VersionsRecord(
                 row.getLong(VERSIONS.ID.getName()),
                 name,
                 structureId,
@@ -59,27 +57,27 @@ public class VersionDao {
     }
 
     public Uni<Long> deleteAndReturnStructureId(SqlClient sqlClient, long id) {
-        var query = dslContext.deleteFrom(VERSIONS)
+        Function<DSLContext, Query> queryBuilder = dslContext -> dslContext.deleteFrom(VERSIONS)
                 .where(VERSIONS.ID.eq(id))
                 .returning(VERSIONS.STRUCTURE_ID);
-        return DbClient.toUni(sqlClient, log, "VersionDao.delete", query, row -> row.getLong(VERSIONS.STRUCTURE_ID.getName()));
+        return dbClient.toUni(sqlClient, log, "VersionDao.delete", queryBuilder, row -> row.getLong(VERSIONS.STRUCTURE_ID.getName()));
     }
 
     public Uni<Integer> delete(SqlClient sqlClient, long id) {
-        var query = dslContext.deleteFrom(VERSIONS)
+        Function<DSLContext, Query> queryBuilder = dslContext -> dslContext.deleteFrom(VERSIONS)
                 .where(VERSIONS.ID.eq(id));
-        return DbClient.execute(sqlClient, log, "VersionDao.delete", query);
+        return dbClient.execute(sqlClient, log, "VersionDao.delete", queryBuilder);
     }
 
     public Uni<Set<VersionsRecord>> getByStructureId(SqlClient sqlClient, long structureId) {
-        var query = dslContext
+        Function<DSLContext, Query> queryBuilder = dslContext -> dslContext
                 .select(
                         VERSIONS.LINK,
                         VERSIONS.ID
                 )
                 .from(VERSIONS)
                 .where(VERSIONS.STRUCTURE_ID.eq(structureId));
-        return DbClient.toUniOfSet(sqlClient, log, "VersionDao.getByStructureId", query, row -> new VersionsRecord(
+        return dbClient.toUniOfSet(sqlClient, log, "VersionDao.getByStructureId", queryBuilder, row -> new VersionsRecord(
                 row.getLong(VERSIONS.ID.getName()),
                 null,
                 null,
@@ -89,10 +87,10 @@ public class VersionDao {
     }
 
     public Uni<Set<VersionsRecord>> getByStructureId(long structureId) {
-        var query = dslContext
+        Function<DSLContext, Query> queryBuilder = dslContext -> dslContext
                 .selectFrom(VERSIONS)
                 .where(VERSIONS.STRUCTURE_ID.eq(structureId));
-        return dbClient.toUniOfSet(log, "VersionDao.getByStructureId", query, row -> new VersionsRecord(
+        return dbClient.toUniOfSet(log, "VersionDao.getByStructureId", queryBuilder, row -> new VersionsRecord(
                 row.getLong(VERSIONS.ID.getName()),
                 row.getString(VERSIONS.NAME.getName()),
                 null,
@@ -105,11 +103,12 @@ public class VersionDao {
                                @Nullable String structureName,
                                @Nullable Long versionId,
                                @Nullable String versionName) {
-        var query = resolveGetLinkQuery(structureId, structureName, versionId, versionName);
-        return dbClient.toUni(log, "VersionDao.getLink", query, row -> row.getString(VERSIONS.LINK.getName()));
+        Function<DSLContext, Query> queryBuilder = dslContext -> resolveGetLinkQuery(dslContext, structureId, structureName, versionId, versionName);
+        return dbClient.toUni(log, "VersionDao.getLink", queryBuilder, row -> row.getString(VERSIONS.LINK.getName()));
     }
 
-    private Query resolveGetLinkQuery(@Nullable Long structureId,
+    private Query resolveGetLinkQuery(DSLContext dslContext,
+                                      @Nullable Long structureId,
                                       @Nullable String structureName,
                                       @Nullable Long versionId,
                                       @Nullable String versionName) {
