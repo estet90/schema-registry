@@ -16,6 +16,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import static org.jooq.impl.DSL.*;
 import static ru.craftysoft.schemaregistry.model.jooq.tables.Schemas.SCHEMAS;
 import static ru.craftysoft.schemaregistry.model.jooq.tables.Structures.STRUCTURES;
 import static ru.craftysoft.schemaregistry.model.jooq.tables.Versions.VERSIONS;
@@ -44,6 +45,16 @@ public class SchemaDao {
                 .from(SCHEMAS);
         if (schemaId != null) {
             return query.where(SCHEMAS.ID.eq(schemaId));
+        }
+        if (versionName == null) {
+            return dslContext.with("last_version")
+                    .as(dslContext.select(max(VERSIONS.ID).as("last_version_id"))
+                            .from(VERSIONS)
+                            .join(STRUCTURES).on(STRUCTURES.ID.eq(VERSIONS.STRUCTURE_ID).and(STRUCTURES.NAME.eq(structureName))))
+                    .select(SCHEMAS.LINK)
+                    .from(SCHEMAS)
+                    .join(table("last_version")).on(SCHEMAS.VERSION_ID.eq(field("last_version_id", Long.class)))
+                    .where(SCHEMAS.PATH.eq(schemaPath));
         }
         return query
                 .join(VERSIONS).on(VERSIONS.ID.eq(SCHEMAS.VERSION_ID).and(VERSIONS.NAME.eq(versionName)))

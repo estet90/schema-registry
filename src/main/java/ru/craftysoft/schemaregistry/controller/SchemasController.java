@@ -20,10 +20,10 @@ public class SchemasController implements SchemasApi {
     @ResponseStatus(OK)
     @Override
     public Uni<String> getSchema(Long schemaId, String schemaPath, String versionName, String structureName) {
-        if (schemaId == null && schemaPath == null && versionName == null && structureName == null) {
+        if (schemaId == null && schemaPath == null && structureName == null) {
             throw new RuntimeException("Хотя бы один из параметров должен быть заполнен");
         }
-        if (schemaId == null && (schemaPath == null || versionName == null || structureName == null)) {
+        if (schemaId == null && (schemaPath == null || structureName == null)) {
             throw new RuntimeException("Хотя бы один из параметров должен быть заполнен");
         }
         return getSchemaOperation.process(schemaId, schemaPath, versionName, structureName);
