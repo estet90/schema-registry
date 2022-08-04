@@ -8,7 +8,7 @@ import java.util.Map;
 
 public class S3Resource implements QuarkusTestResourceLifecycleManager {
 
-    private final LocalStackContainer localStack = new LocalStackContainer(DockerImageName.parse("localstack/localstack:0.11.2"))
+    private final LocalStackContainer localStack = new LocalStackContainer(DockerImageName.parse("localstack/localstack:1.0.3"))
             .withServices(LocalStackContainer.Service.S3);
 
     @Override

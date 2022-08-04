@@ -58,9 +58,7 @@ class OperationTest {
         } catch (IOException e) {
             //noop
         }
-        try (var query = testDslContext.deleteFrom(STRUCTURES)) {
-            query.execute();
-        }
+        testDslContext.deleteFrom(STRUCTURES).execute();
         var listObjectsRequest = ListObjectsRequest.builder()
                 .bucket(bucket)
                 .build();

@@ -55,7 +55,7 @@ dependencies {
             "org.postgresql:postgresql",
 
             "org.testcontainers:localstack",
-            "com.amazonaws:aws-java-sdk-s3:1.12.225",
+            "com.amazonaws:aws-java-sdk-s3:$amazonawsVersion",
     )
 }
 

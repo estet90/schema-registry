@@ -11,7 +11,7 @@ import static ru.craftysoft.schemaregistry.util.TestDbHelper.*;
 
 public class PostgreSqlResource implements QuarkusTestResourceLifecycleManager {
 
-    private final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:14.3-alpine")
+    private final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:14.4-alpine")
             .withDatabaseName("schema_registry");
 
     @Override
